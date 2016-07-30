@@ -9,43 +9,16 @@ import QtQuick.Dialogs 1.0
 import org.kde.plasma.core 2.0 as PlasmaCore
 import QtWebKit 3.0
 
+import org.plasma_light.kcm 1.0
 
-// import com.plasma_light.kcm 1.0
 Rectangle {
     width: 824
     height: 530
 
     color: "#EFF0F1"
 
-    ListModel {
+    Kernels {
         id: kernelsModel
-
-        ListElement {
-            name: "Linux 4.6.2-1-generic"
-            isInstalled: false
-            isLts: false
-            isActive: false
-            isDefault: false
-            isUpgradeable: true
-        }
-
-        ListElement {
-            name: "Linux 4.4.13-1-generic"
-            isInstalled: true
-            isLts: true
-            isActive: true
-            isDefault: true
-            isUpgradeable: false
-        }
-
-        ListElement {
-            name: "Linux 4.4.13-2-generic"
-            isInstalled: false
-            isLts: false
-            isActive: false
-            isDefault: false
-            isUpgradeable: true
-        }
     }
 
     Text {

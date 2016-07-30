@@ -7,6 +7,7 @@
 # Define the C++ source files
 SET(Project_Srcs
     main.cpp
+    kernelmodel.cpp
 )
 
 # Define the resource files

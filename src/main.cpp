@@ -4,17 +4,18 @@
 #include <QtQml>
 #include <QDebug>
 
-// #include "kernelsmodel.h"
+#include "kernelmodel.h"
 
 int main(int argc, char *argv[])
 {
     QApplication app(argc, argv);
 
     QCoreApplication::setApplicationName("KCM");
-    QCoreApplication::setOrganizationDomain("com.plasma_light.kcm");
+    QCoreApplication::setOrganizationDomain("org.plasma_light");
 
 
-    // qmlRegisterType<KernelModel>("com.plasma_light.ice_utility", 1, 0, "Kernels");
+    qmlRegisterType<KernelModel>("org.plasma_light.kcm", 1, 0, "Kernels");
+
 
     QQuickView quickView;
     // Setup view

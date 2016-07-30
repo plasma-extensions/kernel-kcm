@@ -1,0 +1,2 @@
+# find all available kernels in the repositories and their status
+dpkg-query -W -f '${Package} ${db:Status-Status}' 'linux-image-?.*-*'

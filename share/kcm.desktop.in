@@ -1,0 +1,11 @@
+[Desktop Entry]
+Version=@ver@
+Name=KCM
+GenericName=KCM
+Comment=@Project_desc@
+Exec=@PROJECT_NAME@ 
+TryExec=@PROJECT_NAME@
+Icon=
+Terminal=false
+Type=Application
+Categories=Util;

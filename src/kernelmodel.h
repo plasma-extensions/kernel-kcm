@@ -5,6 +5,10 @@
 #include <QString>
 #include <QList>
 #include <QVariantMap>
+#include <QFuture>
+#include <QFutureWatcher>
+
+typedef QFutureWatcher<void> * Task;
 
 class KernelModel : public QAbstractListModel
 {
@@ -19,7 +23,7 @@ public:
         IsLTS,
         IsActive,
         IsDefault,
-        IsUpgradeable
+        IsUpgradable
     };
 
     KernelModel(QObject *parent = 0);
@@ -33,13 +37,26 @@ public:
 signals:
 
 public slots:
-    void loadKernelsData();
-    bool installKernel(QString id);
-    bool removeKernel(QString id);
-    bool setDefaultKernel(QString id);
+
+    QFutureWatcher<void> &installKernel(int index);
+    QFutureWatcher<void> &removeKernel(int index);
+    QFutureWatcher<void> &mekeDefaultKernel(int index);
+    QFutureWatcher<void> &updateKernel(int index);
+
+private slots:
+    void handleLoadKernelsDataFinished();
+
 
 private:
+    QList<QVariantMap> originalEntries;
     QList<QVariantMap> entries;
+
+    QFutureWatcher<QList<QVariantMap>> futureEntriesWatcher;
+    QFutureWatcher<void> removeKernelWatcher;
+    QFutureWatcher<void> installKernelWatcher;
+    QFutureWatcher<void> updateKernelWatcher;
+    QFutureWatcher<void> makeDefaultWatcher;
+
 };
 
 #endif // KERNELMODEL_H

@@ -2,8 +2,8 @@
  * My project
         */
 import QtQuick 2.0
-import QtQuick.Controls 1.4
-import QtQuick.Layouts 1.2
+import QtQuick.Controls 1.2
+import QtQuick.Layouts 1.0
 import QtQuick.Dialogs 1.0
 
 import org.kde.plasma.core 2.0 as PlasmaCore
@@ -82,7 +82,7 @@ Rectangle {
                     spacing: 16
 
                     model: kernelsModel
-                    delegate: itemDeledate
+                    delegate: itemDelegate
 
                     header: Rectangle {
                         width: parent.width
@@ -141,9 +141,12 @@ Rectangle {
                 }
             }
             Button {
-                text: i18n("Remove")
+                text: list.currentItem.dataModel.isInstalled ? i18n("Remove") :i18n("Install")
                 onClicked: {
-
+                    if (list.currentItem.dataModel.isInstalled)
+                        kernelsModel.removeKernel(list.currentIndex);
+                    else
+                        kernelsModel.installKernel(list.currentIndex);
                 }
             }
         }
@@ -193,10 +196,13 @@ Rectangle {
     }
 
     Component {
-        id: itemDeledate
+        id: itemDelegate
         RowLayout {
-            id: laucherDelegate
-
+            id: delegateRootItem
+            property var dataModel;
+            Component.onCompleted: {
+                delegateRootItem.dataModel = model;
+            }
             Text {
                 text: name
             }
@@ -218,7 +224,7 @@ Rectangle {
             }
 
             Text {
-                text: isUpgradeable ? i18n("Yes") : i18n("No")
+                text: isUpgradable ? i18n("Yes") : i18n("No")
                 Layout.fillWidth: true
             }
 

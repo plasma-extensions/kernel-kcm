@@ -1,22 +1,26 @@
 #include "kernelmodel.h"
 
 #include <QProcess>
-
+#include <QFutureWatcher>
+#include <QThreadPool>
+#include <QtQml>
 #include <QDebug>
+
+#include "loadkerneldatatask.h"
+#include "installkerneltask.h"
+#include "uninstallkerneltask.h"
+#include "makedefaulttask.h"
 
 KernelModel::KernelModel(QObject *parent) : QAbstractListModel(parent)
 {
+    qmlRegisterInterface<Task>("Task");
 
-    // TODO: Load kernels info from the system instead from this fixed list
-    QVariantMap entry;
-    entry["Name"] = "Linux Image 4.12.2-generic";
-    entry["IsActive"] = true;
-    entry["IsDefault"] = true;
-    entry["IsLTS"] = true;
-    entry["IsInstalled"] = true;
-    entry["IsUpgradeable"] = true;
 
-    entries.append(entry);
+    LoadKernelDataTask * loadTask =  new LoadKernelDataTask();
+    QThreadPool::globalInstance()->start(loadTask);
+
+    connect(&futureEntriesWatcher,SIGNAL(finished()), this, SLOT(handleLoadKernelsDataFinished()));
+    futureEntriesWatcher.setFuture(loadTask->future());
 }
 
 
@@ -30,7 +34,7 @@ QHash<int, QByteArray> KernelModel::roleNames() const
     roles.insert(IsDefault, "isDefault");
     roles.insert(IsInstalled, "isInstalled");
     roles.insert(IsLTS, "isLts");
-    roles.insert(IsUpgradeable, "isUpgradeable");
+    roles.insert(IsUpgradable, "isUpgradable");
 
     return roles;
 }
@@ -61,8 +65,8 @@ QVariant KernelModel::data(const QModelIndex& index, int role) const {
         return entry["IsInstalled"];
     case IsLTS:
         return entry["IsLTS"];
-    case IsUpgradeable:
-        return entry["IsUpgradeable"];
+    case IsUpgradable:
+        return entry["IsUpgradable"];
     }
     return QVariant();
 }
@@ -92,33 +96,45 @@ bool KernelModel::setData(const QModelIndex & index, const QVariant & value, int
     emit dataChanged(index, index);
 }
 
+QFutureWatcher<void> &KernelModel::installKernel(int index)
+{
+    QVariantMap entry = entries.at(index);
 
-void KernelModel::loadKernelsData() {
-    QProcess gzip;
-    gzip.start("gzip", QStringList() << "-c");
-    if (!gzip.waitForStarted())
-        return;
+    InstallKernelTask *task = new InstallKernelTask(entry["Name"].toString());
+    QThreadPool::globalInstance()->start(task);
 
-    gzip.write("Qt rocks!");
-    gzip.closeWriteChannel();
+    installKernelWatcher.setFuture(task->future());
 
-    if (!gzip.waitForFinished())
-        return;
-
-    QByteArray result = gzip.readAll();
-
-    qDebug() << result;
+    return installKernelWatcher;
 }
 
-bool KernelModel::installKernel(QString id) {
+QFutureWatcher<void> &KernelModel::removeKernel(int index)
+{
+    QVariantMap entry = entries.at(index);
+
+    UninstallKernelTask *task = new UninstallKernelTask(entry["Name"].toString());
+    QThreadPool::globalInstance()->start(task);
+
+    removeKernelWatcher.setFuture(task->future());
+    return removeKernelWatcher;
+}
+
+QFutureWatcher<void> &KernelModel::mekeDefaultKernel(int index)
+{
 
 }
 
 
-bool KernelModel::removeKernel(QString id) {
+QFutureWatcher<void> &KernelModel::updateKernel(int index)
+{
 
 }
 
-bool KernelModel::setDefaultKernel(QString id) {
 
+
+void KernelModel::handleLoadKernelsDataFinished()
+{
+    beginResetModel();
+    entries = futureEntriesWatcher.result();
+    endResetModel();
 }

@@ -1,10 +1,7 @@
-/*
- * My project
-        */
 import QtQuick 2.0
 import QtQuick.Controls 1.2
 import QtQuick.Layouts 1.0
-import QtQuick.Dialogs 1.0
+import QtQuick.Dialogs  1.2
 
 import org.kde.plasma.core 2.0 as PlasmaCore
 import QtWebKit 3.0
@@ -124,9 +121,7 @@ Rectangle {
 
             anchors.margins: 8
 
-
             spacing: 12
-
 
             Button {
                 text: i18n("Changelog")
@@ -136,17 +131,29 @@ Rectangle {
             }
 
             Button {
+                enabled: list.currentItem.dataModel.isUpgradable
                 text: i18n("Update")
                 onClicked: {
+                    if (list.currentIndex < 0)
+                        return;
+
+                    kernelsModel.updateKernel(list.currentIndex)
                 }
             }
             Button {
                 text: list.currentItem.dataModel.isInstalled ? i18n("Remove") :i18n("Install")
                 onClicked: {
+                    if (list.currentIndex < 0)
+                        return;
+
+                    var task
                     if (list.currentItem.dataModel.isInstalled)
-                        kernelsModel.removeKernel(list.currentIndex);
+                        print(kernelsModel.removeKernel(list.currentIndex))
                     else
-                        kernelsModel.installKernel(list.currentIndex);
+                        print(kernelsModel.installKernel(list.currentIndex))
+                    print(task)
+                    progressDialog.setTask(task)
+                    progressDialog.visible = true;
                 }
             }
         }
@@ -242,4 +249,38 @@ Rectangle {
             radius: 0
         }
     }
+
+
+    Dialog {
+        id: progressDialog
+        visible: false
+        property var task
+
+        title: i18n("Executing task")
+        contentItem: Rectangle {
+            implicitHeight: 100
+            implicitWidth: 400
+
+            Text {
+                id: progressDialogMsg
+                text: i18n("Applying changes, please waith.")
+                anchors.centerIn: parent
+            }
+
+            ProgressBar {
+                anchors.top: progressDialogMsg.bottom
+                anchors.horizontalCenter: progressDialogMsg.horizontalCenter;
+                value: -1
+            }
+        }
+        function updateMessageText(text) {
+            progressDialogMsg.text = text;
+        }
+
+        function setTask(task) {
+            progressDialog.task = task;
+            progressDialog.task.progressTextChanged.connect(updateMessageText);
+        }
+    }
+
 }

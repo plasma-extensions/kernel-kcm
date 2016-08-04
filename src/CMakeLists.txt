@@ -13,6 +13,7 @@ SET(Project_Srcs
     makedefaulttask.cpp
     installkerneltask.cpp
     uninstallkerneltask.cpp
+    updatekerneltask.cpp
 )
 
 # Define the resource files
@@ -32,7 +33,7 @@ INCLUDE_DIRECTORIES(
 
 ADD_EXECUTABLE(${PROJECT_NAME} ${Project_Resources} ${Project_Srcs})
 
-TARGET_LINK_LIBRARIES(${PROJECT_NAME} Qt5::Quick Qt5::Widgets Qt5::Concurrent KF5::ConfigCore ${Project_3D_PARTY_LIBRARIES} )
+TARGET_LINK_LIBRARIES(${PROJECT_NAME} Qt5::Quick Qt5::Widgets Qt5::Concurrent KF5::ConfigCore QApt ${Project_3D_PARTY_LIBRARIES} )
 
 INSTALL(FILES ${DESCRIPTOR} DESTINATION /usr/share/applications)
 

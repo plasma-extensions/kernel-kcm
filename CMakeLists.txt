@@ -49,6 +49,7 @@ FIND_PACKAGE(Qt5Concurrent ${Qt_min_REQUIRED} REQUIRED)
 # Add additional libraries
 # FIND_PACKAGE()
 FIND_PACKAGE(KF5Config)
+FIND_PACKAGE(QApt)
 
 # Set default install path:
 IF(NOT CMAKE_INSTALL_PREFIX)

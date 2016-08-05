@@ -1,26 +1,23 @@
 #include "kernelmodel.h"
 
 #include <QProcess>
+#include <QFuture>
 #include <QFutureWatcher>
-#include <QThreadPool>
-#include <QtQml>
+#include <QtConcurrent>
+
 #include <QDebug>
 
-#include "loadkerneldatatask.h"
-#include "installkerneltask.h"
-#include "uninstallkerneltask.h"
-#include "makedefaulttask.h"
+#include <QApt/Backend>
+#include <QApt/Transaction>
+#include <QApt/Package>
+
+
+#include "utils.h"
+
 
 KernelModel::KernelModel(QObject *parent) : QAbstractListModel(parent)
 {
-    qmlRegisterInterface<Task>("Task");
-
-
-    LoadKernelDataTask * loadTask =  new LoadKernelDataTask();
-    QThreadPool::globalInstance()->start(loadTask);
-
-    connect(&futureEntriesWatcher,SIGNAL(finished()), this, SLOT(handleLoadKernelsDataFinished()));
-    futureEntriesWatcher.setFuture(loadTask->future());
+    fetchData();
 }
 
 
@@ -96,45 +93,110 @@ bool KernelModel::setData(const QModelIndex & index, const QVariant & value, int
     emit dataChanged(index, index);
 }
 
-QFutureWatcher<void> &KernelModel::installKernel(int index)
+void KernelModel::fetchData()
+{
+    emit(jobStarted("Loading system data"));
+
+    QFuture<QList<QVariantMap>> futureResult = QtConcurrent::run(utils.loadKernelsData);
+    QFutureWatcher<QList<QVariantMap>> *watcher = new QFutureWatcher<QList<QVariantMap>>();
+    watcher->setFuture(futureResult);
+
+    connect(watcher, &QFutureWatcher<QList<QVariantMap>>::finished, [=] () {
+        beginResetModel();
+        entries = futureResult.result();
+        endResetModel();
+
+        emit(jobFinished(true, ""));
+
+        watcher->deleteLater();
+    });
+}
+
+void KernelModel::install(int index)
 {
     QVariantMap entry = entries.at(index);
+    emit(jobStarted("Installing " + entry["Name"].toString()));
 
-    InstallKernelTask *task = new InstallKernelTask(entry["Name"].toString());
-    QThreadPool::globalInstance()->start(task);
+    QApt::Package *package  = Utils::getAptBackend()->package(entry["Name"].toString());
+    if (!package == 0) {
+        QApt::Transaction *transaction = Utils::getAptBackend()->installPackages(QApt::PackageList() << package);
 
-    installKernelWatcher.setFuture(task->future());
+        transaction->replyUntrustedPrompt(true);
+        transaction->setLocale(QLatin1String(setlocale(LC_MESSAGES, 0)));
 
-    return installKernelWatcher;
+        QObject::connect(transaction, &QApt::Transaction::promptUntrusted, [=] (QStringList untrustedPackages) {
+            qDebug() << "untrustedPackages " << untrustedPackages;
+            transaction->replyUntrustedPrompt(true);
+        });
+
+        QObject::connect(transaction, &QApt::Transaction::progressChanged, [=] (int progress) {
+            qDebug() << "progress" << progress << " " << transaction->statusDetails();
+            emit(jobUpdated(progress, transaction->statusDetails()));
+        });
+
+        QObject::connect(transaction, &QApt::Transaction::finished, [=] (QApt::ExitStatus exitStatus) {
+            qDebug() << "exitStatus: " << exitStatus;
+            qDebug() << transaction->errorString();
+
+            if (exitStatus == QApt::ExitStatus::ExitSuccess)
+                emit(jobFinished(true, ""));
+            else
+                emit(jobFinished(false, transaction->errorString()));
+
+        });
+
+        transaction->run();
+    } else {
+        emit(jobFinished(false, "Unable to resolve package name."));
+    }
 }
 
-QFutureWatcher<void> &KernelModel::removeKernel(int index)
+void KernelModel::remove(int index)
 {
     QVariantMap entry = entries.at(index);
+    emit(jobStarted("Removing " + entry["Name"].toString()));
 
-    UninstallKernelTask *task = new UninstallKernelTask(entry["Name"].toString());
-    QThreadPool::globalInstance()->start(task);
+    QApt::Package *package  = Utils::getAptBackend()->package(entry["Name"].toString());
+    if (!package == 0) {
+        QApt::Transaction *transaction = Utils::getAptBackend()->removePackages(QApt::PackageList() << package);
 
-    removeKernelWatcher.setFuture(task->future());
-    return removeKernelWatcher;
+        transaction->setLocale(QLatin1String(setlocale(LC_MESSAGES, 0)));
+
+        QObject::connect(transaction, &QApt::Transaction::promptUntrusted, [=] (QStringList untrustedPackages) {
+            qDebug() << "untrustedPackages " << untrustedPackages;
+            transaction->replyUntrustedPrompt(true);
+        });
+
+        QObject::connect(transaction, &QApt::Transaction::progressChanged, [=] (int progress) {
+            qDebug() << "progress" << progress << " " << transaction->statusDetails();
+            emit(jobUpdated(progress, transaction->statusDetails()));
+        });
+
+        QObject::connect(transaction, &QApt::Transaction::finished, [=] (QApt::ExitStatus exitStatus) {
+            qDebug() << "exitStatus: " << exitStatus;
+            qDebug() << transaction->errorString();
+
+            if (exitStatus == QApt::ExitStatus::ExitSuccess)
+                emit(jobFinished(true, ""));
+            else
+                emit(jobFinished(false, transaction->errorString()));
+
+        });
+
+        transaction->run();
+    } else {
+        emit(jobFinished(false, "Unable to resolve package name."));
+    }
 }
 
-QFutureWatcher<void> &KernelModel::mekeDefaultKernel(int index)
+void KernelModel::setAsDefault(int index)
 {
-
+    qDebug() << "KernelModel::setAsDefault not implemented yet.";
 }
 
 
-QFutureWatcher<void> &KernelModel::updateKernel(int index)
+void KernelModel::update(int index)
 {
-
-}
-
-
-
-void KernelModel::handleLoadKernelsDataFinished()
-{
-    beginResetModel();
-    entries = futureEntriesWatcher.result();
-    endResetModel();
+    // Call install on the installed package will update it if possible
+    install(index);
 }

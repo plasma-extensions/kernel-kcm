@@ -4,32 +4,24 @@
 #include <QString>
 #include <QList>
 #include <QVariantMap>
-#include <QFuture>
-#include <QFutureWatcher>
+
+namespace QApt {
+    class Backend;
+}
 
 class Utils
 {
 public:
-    Utils();
-    QFuture<QList<QVariantMap>> loadKernelsData();
+    static QList<QVariantMap> loadKernelsData();
 
-    QFuture<void> makeDefault(QString name);
-    QFuture<void> installKernel(QString name);
-    QFuture<void> removeKernel(QString name);
+    static void setAsDefault(QString name);
+    static void installKernel(QString name);
+    static void removeKernel(QString name);
+    static void updateKernel(QString name);
 
+    static QApt::Backend *getAptBackend();
 private:
-    QString getActiveKernel();
-    QString getDefaultKernel();
-
-    bool isActive(QString name);
-    bool isLts(QString name);
-    bool isDefault(QString name);
-    bool isInstalled(QString name);
-
-    class LoadKernelsDataTask: QRunnable {
-        void run();
-        QFuture<QList<QVariantMap>> future;
-    };
+    static QApt::Backend * backend;
 };
 
 #endif // UTILS_H

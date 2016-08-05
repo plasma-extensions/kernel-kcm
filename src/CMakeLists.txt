@@ -9,11 +9,6 @@ SET(Project_Srcs
     main.cpp
     kernelmodel.cpp
     utils.cpp
-    loadkerneldatatask.cpp
-    makedefaulttask.cpp
-    installkerneltask.cpp
-    uninstallkerneltask.cpp
-    updatekerneltask.cpp
 )
 
 # Define the resource files

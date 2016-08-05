@@ -5,10 +5,8 @@
 #include <QString>
 #include <QList>
 #include <QVariantMap>
-#include <QFuture>
-#include <QFutureWatcher>
 
-typedef QFutureWatcher<void> * Task;
+#include "utils.h"
 
 class KernelModel : public QAbstractListModel
 {
@@ -35,28 +33,21 @@ public:
     bool setData(const QModelIndex & index, const QVariant & value, int role = Qt::EditRole) Q_DECL_OVERRIDE;
 
 signals:
+    void jobStarted(QString message);
+    void jobUpdated(int progress, QString message);
+    void jobFinished(bool succeed, QString message);
 
 public slots:
-
-    QFutureWatcher<void> &installKernel(int index);
-    QFutureWatcher<void> &removeKernel(int index);
-    QFutureWatcher<void> &mekeDefaultKernel(int index);
-    QFutureWatcher<void> &updateKernel(int index);
-
-private slots:
-    void handleLoadKernelsDataFinished();
+    void fetchData();
+    void install(int index);
+    void remove(int index);
+    void setAsDefault(int index);
+    void update(int index);
 
 
 private:
-    QList<QVariantMap> originalEntries;
     QList<QVariantMap> entries;
-
-    QFutureWatcher<QList<QVariantMap>> futureEntriesWatcher;
-    QFutureWatcher<void> removeKernelWatcher;
-    QFutureWatcher<void> installKernelWatcher;
-    QFutureWatcher<void> updateKernelWatcher;
-    QFutureWatcher<void> makeDefaultWatcher;
-
+    Utils utils;
 };
 
 #endif // KERNELMODEL_H

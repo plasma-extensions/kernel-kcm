@@ -1,6 +1,6 @@
 import QtQuick 2.0
 import QtQuick.Controls 1.2
-import QtQuick.Layouts 1.0
+import QtQuick.Layouts 1.1
 import QtQuick.Dialogs 1.2
 
 import org.kde.plasma.core 2.0 as PlasmaCore
@@ -94,43 +94,56 @@ Rectangle {
 
             ScrollView {
                 anchors.fill: parent
-                anchors.leftMargin: 16
-                anchors.topMargin: 11
 
                 ListView {
                     id: list
 
                     highlight: highlight
                     highlightFollowsCurrentItem: true
-                    spacing: 16
 
+                    // spacing: 16
                     model: kernelsModel
                     delegate: itemDelegate
 
                     header: Rectangle {
-                        width: parent.width
-                        height: childrenRect.height
-                        color: "white"
-                        z: 100
+                        width: listViewContainer.width
+                        height: 26
+                        color: "lightgray"
+                        z: 10
+
+                        border.color: "#BABCBE"
+                        border.width: 1
 
                         RowLayout {
-                            spacing: 10
+                            anchors.fill: parent
+                            anchors.leftMargin: 16
                             Text {
                                 text: i18n("Kernel Version")
+                                Layout.minimumWidth: 200
+                                Layout.maximumWidth: 200
                             }
                             Text {
+                                Layout.minimumWidth: 100
+                                Layout.maximumWidth: 100
                                 text: i18n("Status")
                             }
                             Text {
+                                Layout.minimumWidth: 100
+                                Layout.maximumWidth: 100
                                 text: i18n("Support")
                             }
                             Text {
+                                Layout.minimumWidth: 50
+                                Layout.maximumWidth: 50
                                 text: i18n("Active")
                             }
                             Text {
+                                Layout.minimumWidth: 50
+                                Layout.maximumWidth: 50
                                 text: i18n("Default")
                             }
                             Text {
+                                Layout.fillWidth: true
                                 text: i18n("Upgrade available")
                             }
                         }
@@ -138,7 +151,6 @@ Rectangle {
                 }
             }
         }
-
 
         RowLayout {
             id: actionButtons
@@ -153,7 +165,8 @@ Rectangle {
                 text: i18n("Changelog")
                 enabled: list.currentItem
                 onClicked: {
-                    var changeLogUrl = kernelsModel.getChangeLogUrl(list.currentIndex)
+                    var changeLogUrl = kernelsModel.getChangeLogUrl(
+                                list.currentIndex)
                     // print("ChangeLog URL ", changeLogUrl)
                     changeLogDialogWebView.url = changeLogUrl
                     changeLogDialog.visible = true
@@ -161,21 +174,24 @@ Rectangle {
             }
 
             Button {
-                enabled: list.currentItem && list.currentItem.dataModel.isUpgradable
+                enabled: list.currentItem
+                         && list.currentItem.dataModel.isUpgradable
                 text: i18n("Update")
                 onClicked: {
                     if (list.currentIndex < 0)
-                        return;
+                        return
 
                     kernelsModel.update(list.currentIndex)
                 }
             }
             Button {
-                text: list.currentItem && list.currentItem.dataModel.isInstalled ? i18n("Remove") : i18n("Install")
+                text: list.currentItem
+                      && list.currentItem.dataModel.isInstalled ? i18n("Remove") : i18n(
+                                                                      "Install")
                 enabled: list.currentItem ? true : false
                 onClicked: {
                     if (list.currentIndex < 0)
-                        return;
+                        return
 
                     var task
                     if (list.currentItem.dataModel.isInstalled)
@@ -195,7 +211,6 @@ Rectangle {
         anchors.margins: 8
 
         spacing: 12
-
 
         Button {
             text: i18n("Apply")
@@ -232,40 +247,65 @@ Rectangle {
 
     Component {
         id: itemDelegate
-        RowLayout {
+        Rectangle {
             id: delegateRootItem
-            property var dataModel;
+
+            color: "transparent"
+            width: listViewContainer.width
+            height: 20
+
+
+            property var dataModel
             Component.onCompleted: {
-                delegateRootItem.dataModel = model;
-            }
-            Text {
-                text: name
+                delegateRootItem.dataModel = model
             }
 
-            Text {
-                text: isInstalled ? i18n("Installed") : i18n("Not Installed")
-            }
-
-            Text {
-                text: isLts ? i18n("LTS") : i18n("Not LTS")
-            }
-
-            Text {
-                text: isActive ? i18n("Yes") : i18n("No")
-            }
-
-            Text {
-                text: isDefault ? i18n("Yes") : i18n("No")
-            }
-
-            Text {
-                text: isUpgradable ? i18n("Yes") : i18n("No")
-                Layout.fillWidth: true
-            }
-
-            MouseArea {
+            RowLayout {
                 anchors.fill: parent
-                onClicked: list.currentIndex = index
+                anchors.leftMargin: 16
+
+                Text {
+                    text: name
+                    Layout.minimumWidth: 200
+                    Layout.maximumWidth: 200
+                    Layout.fillWidth: true
+                }
+
+                Text {
+                    text: isInstalled ? i18n("Installed") : i18n("Not Installed")
+                    Layout.minimumWidth: 100
+                    Layout.maximumWidth: 100
+                }
+
+                Text {
+                    text: isLts ? i18n("LTS") : i18n("Not LTS")
+                    Layout.minimumWidth: 100
+                    Layout.maximumWidth: 100
+                }
+
+                Text {
+                    text: isActive ? i18n("Yes") : i18n("No")
+                    Layout.minimumWidth: 50
+                    Layout.maximumWidth: 50
+                }
+
+                Text {
+                    text: isDefault ? i18n("Yes") : i18n("No")
+                    Layout.minimumWidth: 50
+                    Layout.maximumWidth: 50
+                }
+
+                Text {
+                    text: isUpgradable ? i18n("Yes") : i18n("No")
+                    Layout.minimumWidth: 50
+                    Layout.maximumWidth: 50
+                    Layout.fillWidth: true
+                }
+
+                MouseArea {
+                    anchors.fill: parent
+                    onClicked: list.currentIndex = index
+                }
             }
         }
     }
@@ -277,7 +317,6 @@ Rectangle {
             radius: 0
         }
     }
-
 
     Dialog {
         id: changeLogDialog
@@ -313,13 +352,14 @@ Rectangle {
             Text {
                 id: progressDialogMsg
                 text: i18n("Applying changes, please waith.")
-                anchors.centerIn: parent
+                anchors.bottom: parent.verticalCenter
+                anchors.horizontalCenter: parent.horizontalCenter
             }
 
             ProgressBar {
-                id: progressDialogBar;
-                anchors.top: progressDialogMsg.bottom
-                anchors.horizontalCenter: progressDialogMsg.horizontalCenter;
+                id: progressDialogBar
+                anchors.top: parent.verticalCenter
+                anchors.horizontalCenter: parent.horizontalCenter
                 minimumValue: 0
                 maximumValue: 100
                 indeterminate: true

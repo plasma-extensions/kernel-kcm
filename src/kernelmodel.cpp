@@ -200,3 +200,13 @@ void KernelModel::update(int index)
     // Call install on the installed package will update it if possible
     install(index);
 }
+
+QString KernelModel::getChangeLogUrl(int index)
+{
+    QVariantMap entry = entries.at(index);
+    QApt::Package *package  = Utils::getAptBackend()->package(entry["Name"].toString());
+    if (package != NULL)
+        return package->changelogUrl().toString();
+    else
+        return "";
+}

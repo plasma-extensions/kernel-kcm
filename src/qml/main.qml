@@ -153,7 +153,10 @@ Rectangle {
                 text: i18n("Changelog")
                 enabled: list.currentItem
                 onClicked: {
-
+                    var changeLogUrl = kernelsModel.getChangeLogUrl(list.currentIndex)
+                    // print("ChangeLog URL ", changeLogUrl)
+                    changeLogDialogWebView.url = changeLogUrl
+                    changeLogDialog.visible = true
                 }
             }
 
@@ -275,6 +278,25 @@ Rectangle {
         }
     }
 
+
+    Dialog {
+        id: changeLogDialog
+        visible: false
+        modality: Qt.ApplicationModal
+
+        title: i18n("ChangeLog")
+        contentItem: Rectangle {
+            implicitHeight: 600
+            implicitWidth: 800
+
+            color: "#EFF0F1"
+
+            WebView {
+                id: changeLogDialogWebView
+                anchors.fill: parent
+            }
+        }
+    }
 
     Dialog {
         id: progressDialog

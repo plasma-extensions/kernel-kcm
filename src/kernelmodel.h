@@ -43,6 +43,7 @@ public slots:
     void remove(int index);
     void setAsDefault(int index);
     void update(int index);
+    QString getChangeLogUrl(int index);
 
 
 private:

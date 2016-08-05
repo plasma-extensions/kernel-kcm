@@ -1,7 +1,7 @@
 import QtQuick 2.0
 import QtQuick.Controls 1.2
 import QtQuick.Layouts 1.0
-import QtQuick.Dialogs  1.2
+import QtQuick.Dialogs 1.2
 
 import org.kde.plasma.core 2.0 as PlasmaCore
 import QtWebKit 3.0
@@ -16,6 +16,32 @@ Rectangle {
 
     Kernels {
         id: kernelsModel
+        onJobStarted: {
+            progressDialogMsg.text = message
+            progressDialog.visible = true
+        }
+
+        onJobUpdated: {
+            if (message != "")
+                progressDialogMsg.text = message
+
+            if (progress > 100)
+                progressDialogBar.indeterminate = true
+            else {
+                progressDialogBar.indeterminate = false
+                progressDialogBar.value = progress
+            }
+            progressDialog.visible = true
+        }
+
+        onJobFinished: {
+            progressDialog.visible = false
+
+            if (!succeed) {
+                errorDialog.visible = true
+                errorDialogMsg.text = message
+            }
+        }
     }
 
     Text {
@@ -125,35 +151,34 @@ Rectangle {
 
             Button {
                 text: i18n("Changelog")
+                enabled: list.currentItem
                 onClicked: {
 
                 }
             }
 
             Button {
-                enabled: list.currentItem.dataModel.isUpgradable
+                enabled: list.currentItem && list.currentItem.dataModel.isUpgradable
                 text: i18n("Update")
                 onClicked: {
                     if (list.currentIndex < 0)
                         return;
 
-                    kernelsModel.updateKernel(list.currentIndex)
+                    kernelsModel.update(list.currentIndex)
                 }
             }
             Button {
-                text: list.currentItem.dataModel.isInstalled ? i18n("Remove") :i18n("Install")
+                text: list.currentItem && list.currentItem.dataModel.isInstalled ? i18n("Remove") : i18n("Install")
+                enabled: list.currentItem ? true : false
                 onClicked: {
                     if (list.currentIndex < 0)
                         return;
 
                     var task
                     if (list.currentItem.dataModel.isInstalled)
-                        print(kernelsModel.removeKernel(list.currentIndex))
+                        kernelsModel.remove(list.currentIndex)
                     else
-                        print(kernelsModel.installKernel(list.currentIndex))
-                    print(task)
-                    progressDialog.setTask(task)
-                    progressDialog.visible = true;
+                        kernelsModel.install(list.currentIndex)
                 }
             }
         }
@@ -254,12 +279,14 @@ Rectangle {
     Dialog {
         id: progressDialog
         visible: false
-        property var task
+        modality: Qt.ApplicationModal
 
         title: i18n("Executing task")
         contentItem: Rectangle {
             implicitHeight: 100
             implicitWidth: 400
+
+            color: "#EFF0F1"
 
             Text {
                 id: progressDialogMsg
@@ -268,19 +295,35 @@ Rectangle {
             }
 
             ProgressBar {
+                id: progressDialogBar;
                 anchors.top: progressDialogMsg.bottom
                 anchors.horizontalCenter: progressDialogMsg.horizontalCenter;
-                value: -1
+                minimumValue: 0
+                maximumValue: 100
+                indeterminate: true
             }
-        }
-        function updateMessageText(text) {
-            progressDialogMsg.text = text;
-        }
-
-        function setTask(task) {
-            progressDialog.task = task;
-            progressDialog.task.progressTextChanged.connect(updateMessageText);
         }
     }
 
+    Dialog {
+        id: errorDialog
+        visible: false
+        modality: Qt.ApplicationModal
+
+        standardButtons: StandardButton.Ok
+
+        title: i18n("Unable to complete the task")
+        contentItem: Rectangle {
+            implicitHeight: 100
+            implicitWidth: 400
+
+            color: "#EFF0F1"
+
+            Text {
+                id: errorDialogMsg
+                text: i18n("There was an error, that's all I know.")
+                anchors.centerIn: parent
+            }
+        }
+    }
 }

@@ -36,6 +36,7 @@ signals:
     void jobStarted(QString message);
     void jobUpdated(int progress, QString message);
     void jobFinished(bool succeed, QString message);
+    void systemDataChanged();
 
 public slots:
     void fetchData();
@@ -48,7 +49,6 @@ public slots:
 
 private:
     QList<QVariantMap> entries;
-    Utils utils;
 };
 
 #endif // KERNELMODEL_H

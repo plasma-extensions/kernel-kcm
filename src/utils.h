@@ -5,6 +5,8 @@
 #include <QList>
 #include <QVariantMap>
 
+#include "grubcfgparser.h"
+
 namespace QApt {
     class Backend;
 }
@@ -14,10 +16,9 @@ class Utils
 public:
     static QList<QVariantMap> loadKernelsData();
 
+    static QString getDefult();
     static void setAsDefault(QString name);
-    static void installKernel(QString name);
-    static void removeKernel(QString name);
-    static void updateKernel(QString name);
+
 
     static QApt::Backend *getAptBackend();
 private:

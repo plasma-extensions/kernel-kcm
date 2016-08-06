@@ -8,6 +8,7 @@
 SET(Project_Srcs
     main.cpp
     kernelmodel.cpp
+    grubcfgparser.cpp
     utils.cpp
 )
 

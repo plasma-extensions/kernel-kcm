@@ -16,6 +16,11 @@ Rectangle {
 
     Kernels {
         id: kernelsModel
+
+        Component.onCompleted: {
+            kernelsModel.fetchData()
+        }
+
         onJobStarted: {
             progressDialogMsg.text = message
             progressDialog.visible = true
@@ -41,6 +46,10 @@ Rectangle {
                 errorDialog.visible = true
                 errorDialogMsg.text = message
             }
+        }
+
+        onSystemDataChanged: {
+            kernelsModel.fetchData()
         }
     }
 
@@ -185,6 +194,17 @@ Rectangle {
                 }
             }
             Button {
+                text: i18n("Set as Default")
+                enabled: list.currentItem && list.currentItem.dataModel.isInstalled && !list.currentItem.dataModel.isDefault? true : false
+                onClicked: {
+                    if (list.currentIndex < 0)
+                        return
+
+                    kernelsModel.setAsDefault(list.currentIndex)
+                }
+            }
+
+            Button {
                 text: list.currentItem
                       && list.currentItem.dataModel.isInstalled ? i18n("Remove") : i18n(
                                                                       "Install")
@@ -193,7 +213,6 @@ Rectangle {
                     if (list.currentIndex < 0)
                         return
 
-                    var task
                     if (list.currentItem.dataModel.isInstalled)
                         kernelsModel.remove(list.currentIndex)
                     else

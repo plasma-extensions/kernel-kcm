@@ -17,7 +17,6 @@
 
 KernelModel::KernelModel(QObject *parent) : QAbstractListModel(parent)
 {
-    fetchData();
 }
 
 
@@ -97,7 +96,7 @@ void KernelModel::fetchData()
 {
     emit(jobStarted("Loading system data"));
 
-    QFuture<QList<QVariantMap>> futureResult = QtConcurrent::run(utils.loadKernelsData);
+    QFuture<QList<QVariantMap>> futureResult = QtConcurrent::run(Utils::loadKernelsData);
     QFutureWatcher<QList<QVariantMap>> *watcher = new QFutureWatcher<QList<QVariantMap>>();
     watcher->setFuture(futureResult);
 
@@ -138,9 +137,10 @@ void KernelModel::install(int index)
             qDebug() << "exitStatus: " << exitStatus;
             qDebug() << transaction->errorString();
 
-            if (exitStatus == QApt::ExitStatus::ExitSuccess)
+            if (exitStatus == QApt::ExitStatus::ExitSuccess) {
                 emit(jobFinished(true, ""));
-            else
+                emit(systemDataChanged());
+            } else
                 emit(jobFinished(false, transaction->errorString()));
 
         });
@@ -176,9 +176,10 @@ void KernelModel::remove(int index)
             qDebug() << "exitStatus: " << exitStatus;
             qDebug() << transaction->errorString();
 
-            if (exitStatus == QApt::ExitStatus::ExitSuccess)
+            if (exitStatus == QApt::ExitStatus::ExitSuccess) {
                 emit(jobFinished(true, ""));
-            else
+                emit(systemDataChanged());
+            } else
                 emit(jobFinished(false, transaction->errorString()));
 
         });
@@ -191,7 +192,18 @@ void KernelModel::remove(int index)
 
 void KernelModel::setAsDefault(int index)
 {
-    qDebug() << "KernelModel::setAsDefault not implemented yet.";
+    QVariantMap entry = entries.at(index);
+    emit(jobStarted("Setting " + entry["Name"].toString() + " as default kernel." ));
+
+    QFuture<void> futureResult = QtConcurrent::run(Utils::setAsDefault, entry["Name"].toString());
+    QFutureWatcher<void> *watcher = new QFutureWatcher<void>();
+    watcher->setFuture(futureResult);
+
+    connect(watcher, &QFutureWatcher<void>::finished, [=] () {
+        emit(jobFinished(true, ""));
+        emit(systemDataChanged());
+        watcher->deleteLater();
+    });
 }
 
 

@@ -18,7 +18,7 @@ public:
     enum Roles {
         Name = Qt::UserRole + 1,
         IsInstalled,
-        IsLTS,
+        Support,
         IsActive,
         IsDefault,
         IsUpgradable

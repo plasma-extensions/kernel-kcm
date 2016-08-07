@@ -6,6 +6,17 @@
 #include <QTextStream>
 #include <QLocale>
 #include <QProcess>
+#include <QCoreApplication>
+#include <QThread>
+
+#include <QNetworkAccessManager>
+#include <QNetworkRequest>
+#include <QNetworkReply>
+
+#include <QMutex>
+
+#include <QRegExp>
+
 
 #include <QDebug>
 
@@ -21,6 +32,9 @@ using namespace QApt;
 QList<QVariantMap> Utils::loadKernelsData()
 {
     // qDebug() << "loadKernelsData";
+
+    // Get kernels support info
+    QMap<QString, QString> supportInfo = getSupportInfo();
 
     QList<QVariantMap> newEntries;
     QString searchString("linux-image-");
@@ -58,10 +72,22 @@ QList<QVariantMap> Utils::loadKernelsData()
         QVariantMap newEntry;
 
         newEntry["Name"] = pkg->name();
+
+        QStringList parts = QString(pkg->name()).split("-");
+        QString kernelVersion;
+        if (parts.size() > 3)
+            kernelVersion = parts[2];
+        // qDebug() << "Kernel Version" << kernelVersion;
+
+        newEntry["Version"] = kernelVersion;
         newEntry["IsInstalled"] = QApt::Package::Installed & pkg->state();
         newEntry["IsActive"] = QString(pkg->name()).contains(QSysInfo::kernelVersion());
         newEntry["IsUpgradable"] = QApt::Package::Upgradeable & pkg->state();
         newEntry["IsDefault"] = defaultKernel.compare(pkg->name()) == 0;
+
+
+
+        newEntry["Support"] = supportInfo[kernelVersion];
 
         // qDebug() << newEntry;
         newEntries.append(newEntry);
@@ -194,4 +220,38 @@ QApt::Backend * Utils::getAptBackend()
         backend->openXapianIndex();
     }
     return backend;
+}
+
+QMap<QString, QString> Utils::getSupportInfo()
+{
+    QNetworkAccessManager manager;
+    QNetworkRequest request(QUrl("https://www.kernel.org/"));
+    QNetworkReply *reply = manager.get(request);
+
+    // Whait for netwtork results
+    // TODO: Improve this dirty hack
+    while (!reply->isFinished()) {
+        QCoreApplication::processEvents();
+        usleep(200);
+    }
+
+    QMap<QString, QString> info;
+
+    QString result = reply->readAll();
+    // qDebug() << result;
+    QRegExp rx("(?:<td>)(mainline|stable|longterm|linux-next)(?::</td>)\\s*(<td><strong>)((?:\\d+|\\.)+)+(</strong></td>)");
+
+    int pos = 0;
+
+    while ((pos = rx.indexIn(result, pos)) != -1) {
+        // qDebug() << rx.capturedTexts();
+        QString version = rx.cap(3);
+        QString support = rx.cap(1);
+        info[version] = support;
+
+        pos += rx.matchedLength();
+    }
+
+    // qDebug() << info;
+    return info;
 }

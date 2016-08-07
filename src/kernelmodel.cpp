@@ -29,7 +29,7 @@ QHash<int, QByteArray> KernelModel::roleNames() const
     roles.insert(IsActive, "isActive");
     roles.insert(IsDefault, "isDefault");
     roles.insert(IsInstalled, "isInstalled");
-    roles.insert(IsLTS, "isLts");
+    roles.insert(Support, "support");
     roles.insert(IsUpgradable, "isUpgradable");
 
     return roles;
@@ -59,8 +59,8 @@ QVariant KernelModel::data(const QModelIndex& index, int role) const {
         return entry["IsDefault"];
     case IsInstalled:
         return entry["IsInstalled"];
-    case IsLTS:
-        return entry["IsLTS"];
+    case Support:
+        return entry["Support"];
     case IsUpgradable:
         return entry["IsUpgradable"];
     }

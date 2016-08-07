@@ -23,6 +23,7 @@ public:
     static QApt::Backend *getAptBackend();
 private:
     static QApt::Backend * backend;
+    static QMap<QString, QString> getSupportInfo();
 };
 
 #endif // UTILS_H

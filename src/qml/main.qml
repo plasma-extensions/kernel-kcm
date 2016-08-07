@@ -297,7 +297,7 @@ Rectangle {
                 }
 
                 Text {
-                    text: isLts ? i18n("LTS") : i18n("Not LTS")
+                    text: support
                     Layout.minimumWidth: 100
                     Layout.maximumWidth: 100
                 }
